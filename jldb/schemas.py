@@ -10,6 +10,7 @@ class ProductoOut(BaseModel):
     stock: int
     id_categoria: int
     estado: str
+    imagen_url: str | None = None
 
     class Config:
         from_attributes = True
@@ -118,3 +119,29 @@ class HistorialOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ProductoCrear(BaseModel):
+    nombre: str
+    descripcion: str | None = None
+    precio: float
+    stock: int
+    id_categoria: int
+    estado: str = "Disponible"
+    imagen_url: str | None = None
+    compatibilidad_ids: list[int] = []
+
+
+class ProductoActualizar(BaseModel):
+    nombre: str | None = None
+    descripcion: str | None = None
+    precio: float | None = None
+    stock: int | None = None
+    id_categoria: int | None = None
+    estado: str | None = None
+    imagen_url: str | None = None
+    compatibilidad_ids: list[int] | None = None
+
+class ResenaCrear(BaseModel):
+    id_producto: int
+    calificacion: int
+    comentario: str | None = None

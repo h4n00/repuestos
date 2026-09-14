@@ -23,7 +23,7 @@ function Login() {
         return
       }
       iniciarSesion(
-        { id_usuario: datos.id_usuario, nombre: datos.nombre },
+        { id_usuario: datos.id_usuario, nombre: datos.nombre, rol: datos.rol },
         datos.access_token
       )
       navigate('/')

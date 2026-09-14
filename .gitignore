@@ -18,3 +18,10 @@ build/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Respaldos SQL de la base de datos
+*.sql
+backend/
+
+# Facturas PDF generadas automáticamente
+jldb/factura_*.pdf

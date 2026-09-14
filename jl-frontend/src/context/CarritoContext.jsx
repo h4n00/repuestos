@@ -6,20 +6,21 @@ export function CarritoProvider({ children }) {
   const [items, setItems] = useState([])
 
   const agregarItem = (producto) => {
-    setItems(itemsActuales => {
-      const existente = itemsActuales.find(i => i.id_producto === producto.id_producto)
-      if (existente) {
-        return itemsActuales.map(i =>
-          i.id_producto === producto.id_producto
-            ? { ...i, cantidad: i.cantidad + 1 }
-            : i
-        )
+  setItems(itemsActuales => {
+    const existente = itemsActuales.find(i => i.id_producto === producto.id_producto)
+    if (existente) {
+      if (existente.cantidad >= producto.stock) {
+        return itemsActuales
       }
-
-
-      return [...itemsActuales, { ...producto, cantidad: 1 }]
-    })
-  }
+      return itemsActuales.map(i =>
+        i.id_producto === producto.id_producto
+          ? { ...i, cantidad: i.cantidad + 1 }
+          : i
+      )
+    }
+    return [...itemsActuales, { ...producto, cantidad: 1 }]
+  })
+}
 
   const eliminarItem = (id_producto) => {
     setItems(itemsActuales => itemsActuales.filter(i => i.id_producto !== id_producto))
@@ -29,11 +30,13 @@ export function CarritoProvider({ children }) {
 
   const totalItems = items.reduce((suma, i) => suma + i.cantidad, 0)
   const totalPrecio = items.reduce((suma, i) => suma + (i.precio * i.cantidad), 0)
+  const iva = +(totalPrecio * 0.12).toFixed(2)
+const totalConIva = +(totalPrecio + iva).toFixed(2)
 
-  const aumentarCantidad = (id_producto) => {
+const aumentarCantidad = (id_producto) => {
   setItems(itemsActuales =>
     itemsActuales.map(i =>
-      i.id_producto === id_producto
+      i.id_producto === id_producto && i.cantidad < i.stock
         ? { ...i, cantidad: i.cantidad + 1 }
         : i
     )
@@ -53,7 +56,7 @@ const disminuirCantidad = (id_producto) => {
 }
 
   return (
-    <CarritoContext.Provider value={{ items, agregarItem, eliminarItem, vaciarCarrito, aumentarCantidad, disminuirCantidad, totalItems, totalPrecio }}>
+    <CarritoContext.Provider value={{ items, agregarItem, eliminarItem, vaciarCarrito, aumentarCantidad, disminuirCantidad, totalItems, totalPrecio, iva, totalConIva }}>
       {children}
     </CarritoContext.Provider>
   )

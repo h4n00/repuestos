@@ -1,3 +1,5 @@
+import datetime
+
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, DECIMAL, Text
 from sqlalchemy.sql import func
 from database import Base
@@ -35,6 +37,7 @@ class Producto(Base):
     stock = Column(Integer)
     id_categoria = Column(Integer, ForeignKey("catalogo.id_catalogo"))
     estado = Column(String(20), default="Disponible")
+    imagen_url = Column(String(255), nullable=True)
 
 
 class Direccion_Entrega(Base):
@@ -100,3 +103,19 @@ class Historial_Estado_Pedido(Base):
     estado = Column(String(30))
     fecha_hora = Column(DateTime, server_default=func.now())
     foto_entrega = Column(String(255), nullable=True)
+
+class Producto_Compatibilidad(Base):
+    __tablename__ = "producto_compatibilidad"
+
+    id_producto = Column(Integer, ForeignKey("producto.id_producto"), primary_key=True)
+    id_modelo = Column(Integer, ForeignKey("catalogo.id_catalogo"), primary_key=True)
+
+class Resena(Base):
+    __tablename__ = "resena"
+
+    id_resena = Column(Integer, primary_key=True, index=True)
+    id_usuario = Column(Integer, ForeignKey("usuario.id_usuario"))
+    id_producto = Column(Integer, ForeignKey("producto.id_producto"))
+    calificacion = Column(Integer)
+    comentario = Column(Text, nullable=True)
+    fecha = Column(DateTime, default=datetime.datetime.now)
