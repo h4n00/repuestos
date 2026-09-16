@@ -1015,3 +1015,166 @@ def capturar_pago(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al crear pedido: {str(e)}")
+
+
+@app.get("/admin/reporte-ventas")
+def reporte_ventas(
+    anio: int,
+    mes: int = None,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(solo_admin)
+):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+    from fastapi.responses import Response
+    from io import BytesIO
+    from sqlalchemy import extract
+
+    # Filtrar facturas por año y opcionalmente por mes
+    query = db.query(models.Factura).filter(
+        extract('year', models.Factura.fecha_emision) == anio,
+        models.Factura.estado == 'Emitida'
+    )
+
+    if mes:
+        query = query.filter(extract('month', models.Factura.fecha_emision) == mes)
+
+    facturas = query.order_by(models.Factura.fecha_emision.asc()).all()
+
+    # Crear Excel
+    wb = Workbook()
+    ws = wb.active
+    periodo = f"{MESES_ES[mes-1]} {anio}" if mes else f"Año {anio}"
+    ws.title = f"Ventas {periodo}"[:31]  # Excel limita el nombre de hoja a 31 caracteres
+
+    # Estilos
+    color_naranja = "EA580C"
+    color_blanco = "FFFFFF"
+    color_gris_claro = "F3F4F6"
+
+    fuente_titulo = Font(name='Calibri', size=16, bold=True, color=color_naranja)
+    fuente_subtitulo = Font(name='Calibri', size=11, bold=True)
+    fuente_encabezado = Font(name='Calibri', size=11, bold=True, color=color_blanco)
+    relleno_encabezado = PatternFill(start_color=color_naranja, end_color=color_naranja, fill_type="solid")
+    relleno_total = PatternFill(start_color=color_gris_claro, end_color=color_gris_claro, fill_type="solid")
+    borde = Border(
+        left=Side(style='thin', color='CCCCCC'),
+        right=Side(style='thin', color='CCCCCC'),
+        top=Side(style='thin', color='CCCCCC'),
+        bottom=Side(style='thin', color='CCCCCC')
+    )
+
+    # Encabezado empresa
+    ws.merge_cells('A1:H1')
+    ws['A1'] = "JL REPUESTOS"
+    ws['A1'].font = fuente_titulo
+    ws['A1'].alignment = Alignment(horizontal='center')
+
+    ws.merge_cells('A2:H2')
+    ws['A2'] = "NIT: 1234567-8  |  5a Avenida 12-34, Zona 1, Ciudad de Guatemala"
+    ws['A2'].alignment = Alignment(horizontal='center')
+
+    ws.merge_cells('A3:H3')
+    ws['A3'] = f"Reporte de Ventas - {periodo}"
+    ws['A3'].font = fuente_subtitulo
+    ws['A3'].alignment = Alignment(horizontal='center')
+
+    # Fila vacía
+    fila = 5
+
+    # Encabezados de tabla
+    encabezados = ['No. Factura', 'Serie', 'Fecha', 'NIT Cliente', 'Nombre Cliente', 'Subtotal (Q)', 'IVA 12% (Q)', 'Total (Q)']
+    for col, texto in enumerate(encabezados, start=1):
+        celda = ws.cell(row=fila, column=col, value=texto)
+        celda.font = fuente_encabezado
+        celda.fill = relleno_encabezado
+        celda.alignment = Alignment(horizontal='center', vertical='center')
+        celda.border = borde
+
+    fila += 1
+    total_subtotal = 0
+    total_iva = 0
+    total_general = 0
+
+    # Filas de datos
+    for f in facturas:
+        subtotal_val = float(f.subtotal) if f.subtotal else 0
+        iva_val = float(f.iva) if f.iva else 0
+        total_val = float(f.total) if f.total else 0
+
+        total_subtotal += subtotal_val
+        total_iva += iva_val
+        total_general += total_val
+
+        ws.cell(row=fila, column=1, value=f.numero_factura).border = borde
+        ws.cell(row=fila, column=2, value=f.serie or '').border = borde
+        ws.cell(row=fila, column=3, value=f.fecha_emision.strftime("%d/%m/%Y")).border = borde
+        ws.cell(row=fila, column=4, value=f.nit_cliente or 'CF').border = borde
+        ws.cell(row=fila, column=5, value=f.nombre_facturacion or '').border = borde
+
+        celda_sub = ws.cell(row=fila, column=6, value=subtotal_val)
+        celda_sub.number_format = 'Q#,##0.00'
+        celda_sub.border = borde
+        celda_sub.alignment = Alignment(horizontal='right')
+
+        celda_iva = ws.cell(row=fila, column=7, value=iva_val)
+        celda_iva.number_format = 'Q#,##0.00'
+        celda_iva.border = borde
+        celda_iva.alignment = Alignment(horizontal='right')
+
+        celda_total = ws.cell(row=fila, column=8, value=total_val)
+        celda_total.number_format = 'Q#,##0.00'
+        celda_total.border = borde
+        celda_total.alignment = Alignment(horizontal='right')
+
+        fila += 1
+
+    # Fila de totales
+    ws.cell(row=fila, column=1, value="TOTALES").font = Font(bold=True)
+    ws.merge_cells(start_row=fila, start_column=1, end_row=fila, end_column=5)
+    for col in range(1, 6):
+        ws.cell(row=fila, column=col).fill = relleno_total
+        ws.cell(row=fila, column=col).border = borde
+
+    celda_ts = ws.cell(row=fila, column=6, value=total_subtotal)
+    celda_ts.number_format = 'Q#,##0.00'
+    celda_ts.font = Font(bold=True)
+    celda_ts.fill = relleno_total
+    celda_ts.border = borde
+    celda_ts.alignment = Alignment(horizontal='right')
+
+    celda_ti = ws.cell(row=fila, column=7, value=total_iva)
+    celda_ti.number_format = 'Q#,##0.00'
+    celda_ti.font = Font(bold=True)
+    celda_ti.fill = relleno_total
+    celda_ti.border = borde
+    celda_ti.alignment = Alignment(horizontal='right')
+
+    celda_tg = ws.cell(row=fila, column=8, value=total_general)
+    celda_tg.number_format = 'Q#,##0.00'
+    celda_tg.font = Font(bold=True, color=color_naranja)
+    celda_tg.fill = relleno_total
+    celda_tg.border = borde
+    celda_tg.alignment = Alignment(horizontal='right')
+
+    # Ajustar ancho de columnas
+    anchos = [15, 8, 12, 13, 30, 15, 15, 15]
+    for i, ancho in enumerate(anchos, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = ancho
+
+    # Guardar en buffer
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    nombre_archivo = f"reporte_ventas_{anio}"
+    if mes:
+        nombre_archivo += f"_{mes:02d}"
+    nombre_archivo += ".xlsx"
+
+    return Response(
+        content=buffer.read(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={nombre_archivo}"}
+    )

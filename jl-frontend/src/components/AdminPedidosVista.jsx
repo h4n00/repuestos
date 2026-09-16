@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
+import ReporteVentas from './ReporteVentas'
 
 function AdminPedidosVista({ pedidos, productosStockBajo, estadisticas, cargando, onCambiarEstado }) {
   if (cargando) {
@@ -71,6 +72,8 @@ function AdminPedidosVista({ pedidos, productosStockBajo, estadisticas, cargando
     )}
   </div>
 )}
+
+<ReporteVentas />
 
         {productosStockBajo && productosStockBajo.length > 0 && (
   <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6 rounded-lg">

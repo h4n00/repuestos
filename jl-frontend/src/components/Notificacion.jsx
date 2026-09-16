@@ -12,9 +12,16 @@ function Notificacion() {
   return (
     <>
       {notificacion && (
-        <div className={`fixed top-4 right-4 z-50 border-l-4 p-4 rounded-lg shadow-lg max-w-sm ${estilos[notificacion.tipo] || estilos.info}`}>
-          <p className="font-semibold">{notificacion.mensaje}</p>
-        </div>
+        <div className={`fixed top-20 right-4 z-50 border-l-4 border-l-8 p-6 rounded-lg shadow-2xl min-w-[420px] max-w-md animate-slide-in ${estilos[notificacion.tipo] || estilos.info}`}>
+  <div className="flex items-center gap-3">
+    <span className="text-2xl">
+      {notificacion.tipo === 'exito' && '✓'}
+      {notificacion.tipo === 'error' && '✗'}
+      {notificacion.tipo === 'info' && 'ℹ'}
+    </span>
+    <p className="font-semibold text-base">{notificacion.mensaje}</p>
+  </div>
+</div>
       )}
 
       {confirmacion && (
