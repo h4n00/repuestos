@@ -98,8 +98,7 @@ function CatalogoVista({ productos, categorias, categoriaSeleccionada, busqueda,
                     </div>
                     <h3 className="font-semibold text-gray-800 mb-2">{producto.nombre}</h3>
                     <p className="text-orange-600 font-bold text-lg mt-auto">
-  Q{producto.precio} <span className="text-xs text-gray-500 font-normal">+ IVA</span>
-</p>
+  Q{producto.precio} </p>
                   </div>
                 )
               }
@@ -124,8 +123,7 @@ function CatalogoVista({ productos, categorias, categoriaSeleccionada, busqueda,
                   )}
                   <h3 className="font-semibold text-gray-800 mb-2">{producto.nombre}</h3>
                   <p className="text-orange-600 font-bold text-lg mt-auto">
-  Q{producto.precio} <span className="text-xs text-gray-500 font-normal">+ IVA</span>
-</p>
+  Q{producto.precio} </p>
                 </Link>
               )
             })}

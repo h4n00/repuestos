@@ -86,7 +86,7 @@ function CarritoVista() {
          <div>
   <p className="text-sm text-gray-500">Total de items: {totalItems}</p>
   <p className="text-sm text-gray-600">Subtotal: Q{totalPrecio.toFixed(2)}</p>
-  <p className="text-sm text-gray-600">IVA (12%): Q{iva.toFixed(2)}</p>
+  
   <p className="text-2xl font-bold text-orange-600">Total: Q{totalConIva.toFixed(2)}</p>
 </div>
 

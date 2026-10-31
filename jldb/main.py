@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from database import engine, Base, get_db
@@ -209,8 +211,8 @@ def crear_pedido(pedido: PedidoCreate, db: Session = Depends(get_db), usuario_ac
         )
         db.add(detalle)
 
-    iva = round(subtotal * 0.12, 2)
-    total = round(subtotal + iva, 2)
+        iva = 0
+    total = round(subtotal, 2)
     numero = f"0001-{random.randint(100000, 999999)}"
 
     nueva_factura = models.Factura(
@@ -435,25 +437,18 @@ def descargar_factura_pdf(
     elementos.append(Spacer(1, 0.5*cm))
 
     # TOTALES calculados desde el subtotal
-    iva_calculado = subtotal * 0.12
-    total_calculado = subtotal + iva_calculado
-
+        # TOTAL (sin IVA desglosado, precios ya incluyen IVA)
     totales_datos = [
-        ['Subtotal:', f"Q {subtotal:.2f}"],
-        ['IVA (12%):', f"Q {iva_calculado:.2f}"],
-        ['TOTAL:', f"Q {total_calculado:.2f}"]
+        ['TOTAL:', f"Q {subtotal:.2f}"]
     ]
     tabla_totales = Table(totales_datos, colWidths=[13*cm, 3.5*cm])
     tabla_totales.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
-        ('FONTNAME', (0, 0), (-1, 1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, 1), 10),
-        ('TEXTCOLOR', (0, 0), (-1, 1), colors.HexColor("#374151")),
-        ('FONTNAME', (0, 2), (-1, 2), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 2), (-1, 2), 13),
-        ('TEXTCOLOR', (0, 2), (-1, 2), color_naranja),
-        ('LINEABOVE', (0, 2), (-1, 2), 1, color_naranja),
-        ('TOPPADDING', (0, 2), (-1, 2), 8),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 13),
+        ('TEXTCOLOR', (0, 0), (-1, 0), color_naranja),
+        ('LINEABOVE', (0, 0), (-1, 0), 1, color_naranja),
+        ('TOPPADDING', (0, 0), (-1, 0), 8),
     ]))
     elementos.append(tabla_totales)
     elementos.append(Spacer(1, 1*cm))
@@ -870,6 +865,8 @@ def crear_orden_paypal(
     if not productos_carrito:
         raise HTTPException(status_code=400, detail="El carrito está vacío")
 
+    TASA_GTQ_USD = Decimal("7.80")
+
     subtotal = Decimal("0.00")
     items_paypal = []
     for item in productos_carrito:
@@ -880,17 +877,18 @@ def crear_orden_paypal(
             raise HTTPException(status_code=404, detail=f"Producto {item['id_producto']} no encontrado")
 
         cantidad = int(item["cantidad"])
-        precio = Decimal(str(producto.precio))
-        subtotal += precio * cantidad
+        precio_gtq = Decimal(str(producto.precio))
+        precio_usd = (precio_gtq / TASA_GTQ_USD).quantize(Decimal("0.01"))
+        subtotal += precio_usd * cantidad
 
         items_paypal.append({
             "name": producto.nombre[:127],
-            "unit_amount": {"currency_code": "USD", "value": f"{float(precio):.2f}"},
+            "unit_amount": {"currency_code": "USD", "value": f"{float(precio_usd):.2f}"},
             "quantity": str(cantidad)
         })
 
-    iva = (subtotal * Decimal("0.12")).quantize(Decimal("0.01"))
-    total = (subtotal + iva).quantize(Decimal("0.01"))
+    iva = Decimal("0.00")
+    total = subtotal.quantize(Decimal("0.00"))
 
     token = obtener_token_paypal()
 
@@ -920,7 +918,6 @@ def crear_orden_paypal(
         raise HTTPException(status_code=500, detail=f"Error PayPal: {respuesta.text}")
 
     return {"id_orden_paypal": respuesta.json()["id"]}
-
 
 @app.post("/pagos/capturar")
 def capturar_pago(
@@ -983,8 +980,8 @@ def capturar_pago(
 
         import random
         numero_factura = f"0001-{random.randint(100000, 999999)}"
-        iva_total = round(subtotal_total * 0.12, 2)
-        total_total = round(subtotal_total + iva_total, 2)
+        iva_total = 0
+        total_total = round(subtotal_total, 2)
 
         usuario = db.query(models.Usuario).filter(models.Usuario.id_usuario == id_usuario).first()
 

@@ -30,8 +30,8 @@ export function CarritoProvider({ children }) {
 
   const totalItems = items.reduce((suma, i) => suma + i.cantidad, 0)
   const totalPrecio = items.reduce((suma, i) => suma + (i.precio * i.cantidad), 0)
-  const iva = +(totalPrecio * 0.12).toFixed(2)
-const totalConIva = +(totalPrecio + iva).toFixed(2)
+  const iva = 0
+const totalConIva = +totalPrecio.toFixed(2)
 
 const aumentarCantidad = (id_producto) => {
   setItems(itemsActuales =>

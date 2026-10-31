@@ -59,7 +59,6 @@ function CarruselDestacados() {
             </span>
             <h3 className="text-lg font-bold text-gray-800 mb-1">{productoActual.nombre}</h3>
             <p className="text-2xl font-bold text-orange-600 mb-1">Q{productoActual.precio}</p>
-<p className="text-xs text-gray-500 mb-2">+ IVA</p>
             <p className="text-xs text-orange-700 font-semibold">Ver detalles →</p>
           </div>
         </div>

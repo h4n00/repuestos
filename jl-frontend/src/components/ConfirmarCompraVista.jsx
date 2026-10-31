@@ -101,10 +101,7 @@ function ConfirmarCompraVista({ items, totalPrecio, iva, totalConIva, direccione
     <span>Subtotal:</span>
     <span>Q{totalPrecio.toFixed(2)}</span>
   </div>
-  <div className="flex justify-between text-sm text-gray-600">
-    <span>IVA (12%):</span>
-    <span>Q{iva.toFixed(2)}</span>
-  </div>
+ 
   <div className="flex justify-between items-center pt-2">
     <span className="font-semibold">Total:</span>
     <span className="text-2xl font-bold text-orange-600">Q{totalConIva.toFixed(2)}</span>
