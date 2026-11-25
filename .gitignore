@@ -25,3 +25,5 @@ backend/
 
 # Facturas PDF generadas automáticamente
 jldb/factura_*.pdf
+
+*.pem
