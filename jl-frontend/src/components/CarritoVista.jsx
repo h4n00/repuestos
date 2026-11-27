@@ -37,7 +37,7 @@ function CarritoVista() {
 
         <div className="bg-white rounded-lg shadow divide-y">
           {items.map(item => (
-            <div key={item.id_producto} className="p-4 flex items-center gap-4">
+            <div key={item.id_producto} className="p-4 flex flex-wrap items-center gap-3">
               {item.imagen_url && (
                 <img
                   src={`http://127.0.0.1:8000/imagenes/${item.imagen_url}`}
@@ -46,7 +46,7 @@ function CarritoVista() {
                 />
               )}
 
-              <div className="flex-1">
+              <div className="flex-1 min-w-[120px]">
                 <h3 className="font-semibold text-gray-800">{item.nombre}</h3>
                 <p className="text-sm text-gray-500">Q{item.precio} c/u</p>
               </div>
@@ -68,7 +68,7 @@ function CarritoVista() {
 </button>
               </div>
 
-              <div className="w-24 text-right font-bold text-orange-600">
+              <div className="w-20 sm:w-24 text-right font-bold text-orange-600">
                 Q{item.precio * item.cantidad}
               </div>
 
